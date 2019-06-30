@@ -1,4 +1,5 @@
 const { check } = require('express-validator');
+const User = require('../models').User;
 // validation for route
 const validationChain = [
   check('firstName')
@@ -12,8 +13,13 @@ const validationChain = [
     .withMessage('Please provide a value for emailAddress')
     .isEmail()
     .withMessage('Email Address must be formatted correctly')
-    .custom() // add check for dupe email
-    .withMessage('Email Address already exists'),
+    .custom(value => {
+      return User.findOne({ where: { emailAddress: value } }).then(user => {
+        if (user) {
+          return Promise.reject('E-mail already in use');
+        }
+      });
+    }),
   check('password')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a value for password')
