@@ -1,8 +1,18 @@
 const bcryptjs = require('bcryptjs');
 const auth = require('basic-auth');
 const User = require('../models').User;
+
+function asyncHandler(cb) {
+  return async (req, res, next) => {
+    try {
+      await cb(req, res, next);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+}
 // authentcation for users
-const authenticateUser = async (req, res, next) => {
+const authenticateUser = asyncHandler(async (req, res, next) => {
   // Parse the user's credentials from the Authorization header.
   const creds = auth(req);
   // If the user's credentials are available...
@@ -30,5 +40,5 @@ const authenticateUser = async (req, res, next) => {
     message = 'Auth header not found';
     res.status(401).json({ message: 'Access Denied', error: message });
   }
-};
+});
 exports.authenticateUser = authenticateUser;

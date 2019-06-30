@@ -11,7 +11,9 @@ const validationChain = [
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a value for emailAddress')
     .isEmail()
-    .withMessage('Email Address must be formatted correctly'),
+    .withMessage('Email Address must be formatted correctly')
+    .custom() // add check for dupe email
+    .withMessage('Email Address already exists'),
   check('password')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a value for password')
