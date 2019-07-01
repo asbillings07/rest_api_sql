@@ -3,9 +3,30 @@ module.exports = (sequelize, DataTypes) => {
   const Course = sequelize.define(
     'Course',
     {
-      userId: DataTypes.INTEGER,
-      title: DataTypes.STRING,
-      description: DataTypes.TEXT,
+      userId: {
+        type: DataTypes.INTEGER,
+        validate: {
+          notEmpty: {
+            msg: 'User must be present',
+          },
+        },
+      },
+      title: {
+        type: DataTypes.STRING,
+        validate: {
+          notEmpty: {
+            msg: 'Course Title Required',
+          },
+        },
+      },
+      description: {
+        type: DataTypes.TEXT,
+        validate: {
+          notEmpty: {
+            msg: 'Course Description Required',
+          },
+        },
+      },
       estimatedTime: DataTypes.STRING,
       materialsNeeded: DataTypes.STRING,
     },

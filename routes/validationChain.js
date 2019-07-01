@@ -16,7 +16,9 @@ const validationChain = [
     .custom(value => {
       return User.findOne({ where: { emailAddress: value } }).then(user => {
         if (user) {
-          return Promise.reject('E-mail already in use');
+          return Promise.reject(
+            'E-mail already in use, please use another email'
+          );
         }
       });
     }),
