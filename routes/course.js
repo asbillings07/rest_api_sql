@@ -23,6 +23,15 @@ const courseValidationChain = [
   check('description')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a Course Description'),
+  //   check('user').custom(value => {
+  //     return User.findOne({ where: { : value } }).then(user => {
+  //       if (user === userId) {
+  //         return Promise.reject(
+  //           'You can not edit courses that do not belong to you, please select another course that you own'
+  //         );
+  //       }
+  //     });
+  //   }),
 ];
 
 // Course Routes
@@ -105,20 +114,26 @@ router.put(
     const user = req.currentUser;
     const course = req.body;
     const id = req.params.id;
-
+    const verifyUser = await Course.findOne({ where: { id } });
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map(err => err.msg);
       res.status(400).json({ errors: errorMessages });
-    } else {
+    } else if (verifyUser.userId === user.id) {
       const courses = await Course.findByPk(id);
       courses.update({
-        userId: user.id,
         title: course.title,
         description: course.description,
         estimatedTime: course.estimatedTime,
         materialsNeeded: course.materialsNeeded,
       });
       res.status(204).end();
+    } else {
+      res.status(403).json({
+        errors: {
+          message:
+            'You can only edit courses that you own. Please choose a choose a course you own and try again.',
+        },
+      });
     }
   })
 );
@@ -127,10 +142,25 @@ router.delete(
   '/courses/:id',
   authenticateUser,
   asyncHandler(async (req, res, next) => {
+    const user = req.currentUser;
     const id = req.params.id;
-    const course = await Course.findByPk(id);
-    course.destroy();
-    res.status(204).end();
+    const verifyUser = await Course.findOne({ where: { id } });
+    if (verifyUser.userId === user.id) {
+      const course = await Course.findByPk(id);
+      course.destroy();
+      res.status(204).end();
+    } else {
+      res.status(403).json({
+        errors: {
+          message:
+            'You can only delete courses that you own. Please choose a choose a course you own and try again.',
+        },
+      });
+    }
   })
 );
 module.exports = router;
+
+/**
+ * The PUT /api/courses/:id and DELETE /api/courses/:id routes return a 403 status code if the current user doesn't own the requested course
+ */
