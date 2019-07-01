@@ -1,5 +1,5 @@
 const { check } = require('express-validator');
-const User = require('../models').User;
+const { User } = require('../models');
 // validation for route
 const validationChain = [
   check('firstName')

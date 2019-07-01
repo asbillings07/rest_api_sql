@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Course = require('../models').Course;
-const User = require('../models').User;
+const { Course } = require('../models');
+const { User } = require('../models');
 const { authenticateUser } = require('./authenticateUser');
 const { check, validationResult } = require('express-validator');
 
@@ -11,7 +11,11 @@ function asyncHandler(cb) {
     try {
       await cb(req, res, next);
     } catch (err) {
-      console.log(err);
+      if (err === 'SequelizeDatabaseError') {
+        res.status(err.status).json({ error: err.message });
+      } else {
+        next(err);
+      }
     }
   };
 }
@@ -23,15 +27,6 @@ const courseValidationChain = [
   check('description')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a Course Description'),
-  //   check('user').custom(value => {
-  //     return User.findOne({ where: { : value } }).then(user => {
-  //       if (user === userId) {
-  //         return Promise.reject(
-  //           'You can not edit courses that do not belong to you, please select another course that you own'
-  //         );
-  //       }
-  //     });
-  //   }),
 ];
 
 // Course Routes
@@ -50,7 +45,14 @@ router.get(
       ],
       attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
     });
-    res.status(200).json(courses);
+    if (courses) {
+      res.status(200).json(courses);
+    } else {
+      res.status(404).json({
+        error: '404 Not Found',
+        message: 'Courses not found at selected route',
+      });
+    }
   })
 );
 
@@ -58,21 +60,30 @@ router.get(
 router.get(
   '/courses/:id',
   asyncHandler(async (req, res, next) => {
-    const id = req.params.id;
-    const course = await Course.findAll({
-      where: {
-        id,
-      },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+    const id = +req.params.id;
+
+    if (id) {
+      const course = await Course.findAll({
+        where: {
+          id,
         },
-      ],
-      attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
-    });
-    res.status(200).json(course);
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+          },
+        ],
+        attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+      });
+
+      res.status(200).json(course);
+    } else {
+      res.status(404).json({
+        error: '404 Not Found',
+        message: 'Course not found at selected Route',
+      });
+    }
   })
 );
 
@@ -113,7 +124,7 @@ router.put(
     const errors = validationResult(req);
     const user = req.currentUser;
     const course = req.body;
-    const id = req.params.id;
+    const id = +req.params.id;
     const verifyUser = await Course.findOne({ where: { id } });
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map(err => err.msg);
@@ -143,10 +154,11 @@ router.delete(
   authenticateUser,
   asyncHandler(async (req, res, next) => {
     const user = req.currentUser;
-    const id = req.params.id;
+    const id = +req.params.id;
     const verifyUser = await Course.findOne({ where: { id } });
     if (verifyUser.userId === user.id) {
       const course = await Course.findByPk(id);
+
       course.destroy();
       res.status(204).end();
     } else {

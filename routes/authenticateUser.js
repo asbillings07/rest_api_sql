@@ -1,6 +1,6 @@
 const bcryptjs = require('bcryptjs');
 const auth = require('basic-auth');
-const User = require('../models').User;
+const { User } = require('../models');
 
 function asyncHandler(cb) {
   return async (req, res, next) => {
