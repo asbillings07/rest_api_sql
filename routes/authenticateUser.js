@@ -20,7 +20,7 @@ const authenticateUser = asyncHandler(async (req, res, next) => {
   if (creds) {
     const user = await User.findOne({
       where: { emailAddress: creds.name },
-    }).catch(err => console.log(err));
+    });
 
     if (user) {
       const authed = bcryptjs.compareSync(creds.pass, user.password);
