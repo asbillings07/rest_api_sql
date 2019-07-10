@@ -9,11 +9,6 @@ const cors = require('cors');
 const userRoute = require('./routes/user');
 const courseRoute = require('./routes/course');
 
-const corsOptions = {
-  origin: 'http://localhost:3000',
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
 // variable to enable global error logging
 const enableGlobalErrorLogging =
   process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
@@ -25,7 +20,7 @@ const app = express();
 app.use(morgan('dev'));
 // parse incoming JSON from req
 app.use(express.json());
-app.use(cors(corsOptions));
+app.use(cors());
 
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
